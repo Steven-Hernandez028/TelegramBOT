@@ -1,0 +1,14 @@
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\bin\Debug\net8.0\QuesoPrinter.exe
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\bin\Debug\net8.0\QuesoPrinter.deps.json
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\bin\Debug\net8.0\QuesoPrinter.runtimeconfig.json
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\bin\Debug\net8.0\QuesoPrinter.dll
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\bin\Debug\net8.0\QuesoPrinter.pdb
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.AssemblyInfoInputs.cache
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.AssemblyInfo.cs
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.csproj.CoreCompileInputs.cache
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.dll
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\refint\QuesoPrinter.dll
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.pdb
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\QuesoPrinter.genruntimeconfig.cache
+C:\Users\Dev_3\source\repos\TelegramBot\QuesoPrinter\obj\Debug\net8.0\ref\QuesoPrinter.dll
