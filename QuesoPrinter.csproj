@@ -7,4 +7,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Binance.Net" Version="10.17.0" />
+    <PackageReference Include="EPPlus" Version="5.8.3" />
+    <PackageReference Include="WTelegramClient" Version="4.2.8" />
+  </ItemGroup>
+
 </Project>
