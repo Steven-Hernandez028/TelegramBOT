@@ -9,13 +9,10 @@ namespace TelegramBot
     public class TelegramReader
     {
         private static Client? _client;
-        private static  string  _phoneNumber = "+18095860390"; // Your phone number with country code
-        private static string _apiHash = "e31ef1eb8aa2fa045a6d4b6db52c6352"; // From my.telegram.org
-        private static int _apiId = 29051232 ; // From my.telegram.org
-        private  const int WHALE_CRYPTO_KEY = 1951214339;
-
-        private readonly string[] PAIR_BLACKLIST = ["LITUSDT", "ORBUSDT", "MEMEUSDT", "SLPUSDT", "IOSTUSDT", "BATUSDT"];
-        
+        private static  string  _phoneNumber = "+18095860390"; 
+        private static string _apiHash = "e31ef1eb8aa2fa045a6d4b6db52c6352"; 
+        private static int _apiId = 29051232 ;
+        internal const int WHALE_CRYPTO_KEY = 1951214339;
 
 
         public TelegramReader(){
@@ -79,19 +76,32 @@ namespace TelegramBot
                 Console.WriteLine("Group not found!");
                 return null;
             }
-            int totalMessages = 800;
-            int limit = 100;
-            int pages = totalMessages / limit;
+
+            int pages = Configuration.totalMessages / Configuration.limit;
             List<string> BlockMessage = new List<string>();
             int offset_id = 0;
             int add_offset = 0;
-
             for (int i = 0; i < pages; i++)
             {
-                var messages = await _client.Messages_GetHistory(targetChat,
+                Messages_MessagesBase messages;
+
+                if(Configuration.IsFilterDateFilter)
+                {
+                    messages = await _client.Messages_GetHistory(targetChat,
+                                      offset_id: offset_id,
+                                      add_offset: add_offset,
+                                      offset_date: Configuration.TO_DATE,
+                                      limit: Configuration.limit);
+
+                }
+                else
+                {
+
+                messages  = await _client.Messages_GetHistory(targetChat,
                     offset_id: offset_id,
                     add_offset: add_offset,
-                    limit: limit);
+                    limit: Configuration.limit);
+                }
 
                 if (messages.Messages.Count() == 0) break;
 
@@ -107,29 +117,37 @@ namespace TelegramBot
                         {
 
                         var pairsubstring = result.Value.Substring(0, result.Value.IndexOf(".") );
-                        if (PAIR_BLACKLIST.Contains(pairsubstring) )
+                        if (Configuration.PAIR_BLACKLIST.Contains(pairsubstring) )
                             continue;
                         }
                         if (result.Success)
                         {
-                            BlockMessage.Add($"## {msg.date} {msg.message.Replace("\n", "").Replace("\b", "").Replace("\t", "")} ##");
+                            if (Configuration.IsFilterDateFilter && msg.date >= Configuration.FROM_DATE && msg.date <= Configuration.TO_DATE)
+                            {
+                                BlockMessage.Add($"## {msg.date} {msg.message.Replace("\n", "").Replace("\b", "").Replace("\t", "")} ##");
+                            }
+
+                            if (!Configuration.IsFilterDateFilter)
+                            {
+                                BlockMessage.Add($"## {msg.date} {msg.message.Replace("\n", "").Replace("\b", "").Replace("\t", "")} ##");
+                            }
                         }
                     }
                 }
 
-                // Actualizar el offset_id con el último mensaje recibido
+                
                 var lastMessage = messages.Messages.LastOrDefault() as Message;
                 if (lastMessage != null)
                 {
                     offset_id = lastMessage.id;
-                    add_offset = 0; // Cargar mensajes más antiguos que el último ID
+                    add_offset = 0; 
                 }
                 else
                 {
                     break;
                 }
 
-                await Task.Delay(500); // Delay para evitar límites de rate limit
+                await Task.Delay(500); 
             }
             return BlockMessage;
         }
