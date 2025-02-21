@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
+using TelegramBot;
+using TL;
 namespace Excel;
 public record TradingSignal(
     DateTime Timestamp,
@@ -22,9 +24,12 @@ public class ExportExcel
 {
   
     private List<string> _input;
+    string FilePath;
+
 
     public ExportExcel(List<string> _input){
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        FilePath = $"signals-{DateTime.Now.TimeOfDay.TotalMinutes}.xlsx";
 
         this._input= _input;
     }
@@ -32,10 +37,15 @@ public class ExportExcel
 
          var signals = ParseSignals(_input);
          
-    
-        CreateExcel(signals, "signals.xlsx");
+        CreateExcel(signals, FilePath);
         Console.WriteLine("Archivo Excel creado exitosamente.");
     }
+    public string GetFilePath()
+    {
+        return this.FilePath;
+    }
+
+
     /// <summary>
     /// Parsea el texto de entrada y devuelve una lista de señales de trading.
     /// </summary>
@@ -105,7 +115,7 @@ public class ExportExcel
         {
             if (line.Contains("• Entry: "))
             {
-                var entryMatch = Regex.Match(line, @"• Entry: (\d+\.\d+)");
+                var entryMatch = Regex.Match(line, @"• Entry: (\d+(\.\d+)?)");
                 if (entryMatch.Success)
                     entryPrice = decimal.Parse(entryMatch.Groups[1].Value);
             }
@@ -115,7 +125,7 @@ public class ExportExcel
                 for (int i = 0; i < tpMatches.Count; i++)
                 {
                     decimal tpValue = decimal.Parse(tpMatches[i].Groups[1].Value);
-
+                    //tpValue = tpValue + (tpValue * 0.01M);
                     if (i == 0) tp1 = tpValue;
                     else if (i == 1) tp2 = tpValue;
                     else if (i == 2) tp3 = tpValue;
@@ -126,9 +136,11 @@ public class ExportExcel
             {
                 var slMatch = Regex.Match(line, @"• SL: (\d+\.\d+)");
                 if (slMatch.Success)
-                    sl = position is "LONG" ? entryPrice - (entryPrice * .09m) : entryPrice + (entryPrice * .09m);  //VERSION TEST 0.2
-                // decimal.Parse(slMatch.Groups[1].Value); VERSION ORIGINAL
-                //    sl = position is "LONG" ? entryPrice - (entryPrice * .05m) : entryPrice - (entryPrice * .05m); VERSION TEST 0.1
+                {                
+                    var liquidationByPosition = position is "SHORT" ? Helper.CalculateShortLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage) : Helper.CalculateLongLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage);
+                      sl = liquidationByPosition - ((Configuration.STOP_LOSS_PERCENTAGE / 100) * liquidationByPosition);
+                }
+                                                                                                                                                                                //  sl = position is "LONG" ? entryPrice - (entryPrice * Configuration.STOP_LOSS_PERCENTAGE) : entryPrice + (entryPrice * Configuration.STOP_LOSS_PERCENTAGE);  //VERSION TEST 0.2                                                                                                                                                                            // decimal.Parse(slMatch.Groups[1].Value); VERSION ORIGI
             }
         }
 
