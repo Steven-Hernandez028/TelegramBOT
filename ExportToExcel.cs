@@ -46,9 +46,6 @@ public class ExportExcel
     }
 
 
-    /// <summary>
-    /// Parsea el texto de entrada y devuelve una lista de señales de trading.
-    /// </summary>
     private static List<TradingSignal> ParseSignals(List<string> lines)
     {
         var signals = new List<TradingSignal>();
@@ -83,28 +80,29 @@ public class ExportExcel
         return signals;
     }
 
-    /// <summary>
-    /// Parsea un bloque de líneas correspondiente a una señal de trading.
-    /// </summary>
     private static TradingSignal ParseSignalBlock(List<string> block)
     {
         if (block.Count == 0)
             return null;
 
-        // Primera línea: timestamp, símbolo y posición
         var firstLine = block[0];
         var timestampMatch = Regex.Match(firstLine, @"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (?:AM|PM)");
         if (!timestampMatch.Success)
             return null;
  
         string timestampStr = timestampMatch.Groups[0].Value;
-        DateTime timestamp = DateTime.ParseExact(timestampStr, "M/d/yyyy h:mm:ss tt", CultureInfo.InvariantCulture).AddHours(-4);
+            DateTime timestampUtc = DateTime.SpecifyKind(
+                DateTime.ParseExact(timestampStr, "M/d/yyyy h:mm:ss tt", CultureInfo.InvariantCulture),
+                DateTimeKind.Utc
+            );
 
+            DateTime timestampLocal = timestampUtc.ToLocalTime(); 
         var symbolPositionMatch = Regex.Match(firstLine, @"\ ([A-Z]+USDT\.P) (LONG|SHORT) / Cross 25x");
         if (!symbolPositionMatch.Success)
             return null;
 
         string symbol = symbolPositionMatch.Groups[1].Value.Substring(0, symbolPositionMatch.Groups[1].Value.IndexOf('.')) ;
+        
         string position = symbolPositionMatch.Groups[2].Value;
 
         decimal? entryPrice = null;
@@ -125,36 +123,33 @@ public class ExportExcel
                 for (int i = 0; i < tpMatches.Count; i++)
                 {
                     decimal tpValue = decimal.Parse(tpMatches[i].Groups[1].Value);
-                    //tpValue = tpValue + (tpValue * 0.01M);
                     if (i == 0) tp1 = tpValue;
                     else if (i == 1) tp2 = tpValue;
                     else if (i == 2) tp3 = tpValue;
                     else if (i == 3) tp4 = tpValue;
                 }
-            }
+           }
              if (line.Contains("• SL:"))
             {
                 var slMatch = Regex.Match(line, @"• SL: (\d+\.\d+)");
                 if (slMatch.Success)
                 {                
-                    var liquidationByPosition = position is "SHORT" ? Helper.CalculateShortLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage) : Helper.CalculateLongLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage);
-                      sl = liquidationByPosition - ((Configuration.STOP_LOSS_PERCENTAGE / 100) * liquidationByPosition);
-                }
-                                                                                                                                                                                //  sl = position is "LONG" ? entryPrice - (entryPrice * Configuration.STOP_LOSS_PERCENTAGE) : entryPrice + (entryPrice * Configuration.STOP_LOSS_PERCENTAGE);  //VERSION TEST 0.2                                                                                                                                                                            // decimal.Parse(slMatch.Groups[1].Value); VERSION ORIGI
+                    // var liquidationByPosition = position is "SHORT" ? Helper.CalculateShortLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage) : Helper.CalculateLongLiquidationPrice((decimal)entryPrice!, Configuration.InitialBalance, Configuration.Leverage);
+                    //   sl = liquidationByPosition - (Configuration.STOP_LOSS_PERCENTAGE / 100 * liquidationByPosition);
+//  sl = position is "LONG" ? entryPrice - (entryPrice * Configuration.STOP_LOSS_PERCENTAGE) : entryPrice + (entryPrice * Configuration.STOP_LOSS_PERCENTAGE);  
+                    sl  = Decimal.Parse(slMatch.Groups[1].Value);
+//VERSION TEST 0.2                       
+            }
             }
         }
 
-        // Verificar que se hayan encontrado los campos obligatorios
         if (entryPrice.HasValue && sl.HasValue)
         {
-            return new TradingSignal(timestamp, symbol, position, entryPrice.Value, tp1, tp2, tp3, tp4, sl.Value);
+            return new TradingSignal(timestampLocal, symbol, position, entryPrice.Value, tp1, tp2, tp3, tp4, sl.Value);
         }
         return null;
     }
 
-    /// <summary>
-    /// Crea un archivo Excel con las señales de trading organizadas en columnas.
-    /// </summary>
     private static void CreateExcel(List<TradingSignal> signals, string filePath)
     {
         using (var package = new ExcelPackage())
@@ -172,7 +167,6 @@ public class ExportExcel
             worksheet.Cells[1, 8].Value = "TP4";
             worksheet.Cells[1, 9].Value = "SL";
 
-            // Escribir datos
             for (int i = 0; i < signals.Count; i++)
             {
                 var signal = signals[i];
@@ -189,7 +183,6 @@ public class ExportExcel
                 worksheet.Cells[row, 9].Value = signal.SL;
             }
 
-            // Guardar el archivo
             package.SaveAs(new FileInfo(filePath));
         }
     }
